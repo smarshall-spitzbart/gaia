@@ -338,7 +338,7 @@ func NewGaiaApp(
 		keys[banktypes.StoreKey],
 		app.AccountKeeper,
 		app.GetSubspace(banktypes.ModuleName),
-		app.ModuleAccountAddrs(),
+		app.BlockedModuleAccountAddrs(),
 	)
 
 	app.AuthzKeeper = authzkeeper.NewKeeper(
@@ -832,6 +832,19 @@ func (app *GaiaApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 // LoadHeight loads a particular height
 func (app *GaiaApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height)
+}
+
+func (app *GaiaApp) BlockedModuleAccountAddrs() map[string]bool {
+	modAccAddrs := app.ModuleAccountAddrs()
+
+	// remove module accounts that are ALLOWED to received funds
+	//
+	// TODO: Blocked on https://github.com/cosmos/cosmos-sdk/pull/11998 getting
+	// into 0.46
+	// delete(modAccAddrs, authtypes.NewModuleAddress(grouptypes.ModuleName).String())
+	delete(modAccAddrs, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+
+	return modAccAddrs
 }
 
 // ModuleAccountAddrs returns all the app's module account addresses.
